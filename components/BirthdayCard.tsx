@@ -1,4 +1,3 @@
-// BirthdayCard.js (or BirthdayCard.tsx if using TypeScript)
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -7,9 +6,11 @@ import {
   TextInput,
   Button,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import * as ImagePicker from 'expo-image-picker'; // Import Expo's ImagePicker
 
 const BirthdayCard = () => {
   const bounceValue = useSharedValue(0);
@@ -18,6 +19,7 @@ const BirthdayCard = () => {
   const [message, setMessage] = useState('Wishing you joy and happiness!');
   const [inputText, setInputText] = useState('');
   const [decoration, setDecoration] = useState('#ff6347');
+  const [imageUri, setImageUri] = useState(null); // State to store the image URI
 
   // Trigger animation on mount
   useEffect(() => {
@@ -29,15 +31,17 @@ const BirthdayCard = () => {
     transform: [{ scale: bounceValue.value }],
   }));
 
-  // Animated style for icon rotation
-  const rotateValue = useSharedValue(0);
-  const animatedIconStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotateValue.value}deg` }],
-  }));
+  // Pick an image from the user's library
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
 
-  // Rotate icon on tap
-  const handleIconPress = () => {
-    rotateValue.value = withSpring(rotateValue.value + 360);
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri); // Set the selected image URI
+    }
   };
 
   // Update the card message
@@ -68,13 +72,15 @@ const BirthdayCard = () => {
       >
         <Text style={styles.colorPickerText}>Toggle Decoration Color</Text>
       </TouchableOpacity>
+      {/* Image Upload */}
+      <Button title="Add Image" onPress={pickImage} />
       {/* Card with Animation */}
       <Animated.View style={[styles.card, animatedCardStyle]}>
+        {/* Display Selected Image */}
+        {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
         {/* Rotating Icon */}
-        <TouchableOpacity onPress={handleIconPress}>
-          <Animated.View style={animatedIconStyle}>
-            <Icon name="cake" size={100} color={decoration} />
-          </Animated.View>
+        <TouchableOpacity>
+          <Icon name="cake" size={100} color={decoration} />
         </TouchableOpacity>
         {/* Dynamic Message */}
         <Text style={styles.text}>{message}</Text>
@@ -137,6 +143,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#555',
     textAlign: 'center',
+  },
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    marginBottom: 10,
   },
 });
 
